@@ -17,7 +17,7 @@ studylock status
 
 While locked, the root daemon (re-checks every 3 s):
 - writes social-media domains + DoH resolvers into `/etc/hosts` (and undoes any manual edit)
-- force-quits Discord, WhatsApp, Telegram, etc.
+- force-quits Telegram, Messenger, Instagram, TikTok and Snapchat apps
 - accepts no "stop" command. Only the timer + checklist unlock it. Customise the lists in
   `/var/lib/studylock/config.json` (`domains`, `apps`).
 

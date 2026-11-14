@@ -11,8 +11,7 @@ END = "# <<< studylock <<<"
 DEFAULT_DOMAINS = [
     "instagram.com", "facebook.com", "fb.com", "messenger.com", "twitter.com", "x.com",
     "tiktok.com", "snapchat.com", "reddit.com", "youtube.com", "youtu.be", "twitch.tv",
-    "discord.com", "discord.gg", "web.whatsapp.com", "whatsapp.com", "web.telegram.org",
-    "telegram.org", "linkedin.com", "pinterest.com", "tumblr.com", "threads.net",
+    "web.telegram.org", "telegram.org", "linkedin.com", "tumblr.com", "threads.net",
     "9gag.com", "netflix.com",
 ]
 # Block DNS-over-HTTPS resolvers so browsers can't bypass /etc/hosts.
@@ -20,7 +19,7 @@ DOH_DOMAINS = [
     "dns.google", "cloudflare-dns.com", "mozilla.cloudflare-dns.com",
     "dns.quad9.net", "doh.opendns.com", "dns.nextdns.io",
 ]
-DEFAULT_APPS = ["Discord", "WhatsApp", "Telegram", "Messenger", "Instagram", "TikTok", "Snapchat"]
+DEFAULT_APPS = ["Telegram", "Messenger", "Instagram", "TikTok", "Snapchat"]
 
 
 def home_dir() -> Path:

@@ -77,5 +77,5 @@ def run():
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     while True:  # re-apply every few seconds so manual edits to /etc/hosts get undone
         with LOCK:
-            enforce(Session(), cfg)
+            enforce(Session(), load_config())  # re-read config so edits apply without a restart
         time.sleep(3)
