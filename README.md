@@ -43,6 +43,15 @@ iOS won't let a Mac lock your phone, so the phone *follows* the Mac's session:
 
 Tip: the Mac server answers on your LAN only; nothing leaves your network.
 
+## Proximity (lock only when you're home)
+Add your home coordinates to `/var/lib/studylock/config.json`:
+```json
+"home": {"lat": 0.0, "lon": 0.0, "radius_m": 150}
+```
+The Shortcut sends the phone's GPS as `&lat=...&lon=...`; `/status` then returns `near` and
+`lock_phone` (= session running AND phone within the radius). The Shortcut should read **lock_phone**.
+No location, or outside the radius, means "away": never locked.
+
 ## Development
 ```bash
 STUDYLOCK_HOME=/tmp/sl STUDYLOCK_HOSTS=/tmp/hosts python3 -m studylock daemon

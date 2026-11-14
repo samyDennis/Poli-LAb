@@ -9,7 +9,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from .core import Session, apply_hosts, kill_apps, load_config
+from .core import Session, apply_hosts, is_near, kill_apps, load_config
 
 LOCK = threading.Lock()
 
@@ -32,14 +32,20 @@ def make_handler(cfg):
 
         def do_GET(self):
             u = urlparse(self.path)
-            token = parse_qs(u.query).get("token", [""])[0]
+            q = parse_qs(u.query)
+            token = q.get("token", [""])[0]
             if u.path != "/status":
                 return self._send(404, {"error": "not found"})
             expected = load_config()["token"]  # fresh read so token edits apply live
             if not self._local() and (not expected or token != expected):
                 return self._send(403, {"error": "bad token"})
             with LOCK:
-                self._send(200, Session().status())
+                st = Session().status()
+            # Phone should lock only while a session runs AND the phone is at home.
+            near = is_near(load_config(), q.get("lat", [None])[0], q.get("lon", [None])[0])
+            st["near"] = near
+            st["lock_phone"] = st["locked"] and near
+            self._send(200, st)
 
         def do_POST(self):
             if not self._local():

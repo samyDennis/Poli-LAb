@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from studylock.core import BEGIN, Session, apply_hosts, strip_block
+from studylock.core import BEGIN, Session, apply_hosts, is_near, strip_block
 
 
 class T(unittest.TestCase):
@@ -31,6 +31,16 @@ class T(unittest.TestCase):
         apply_hosts(False, ["instagram.com"], h)
         self.assertEqual(h.read_text(), "127.0.0.1 localhost\n")
         self.assertNotIn(BEGIN, strip_block(h.read_text()))
+
+
+class Near(unittest.TestCase):
+    cfg = {"home": {"lat": 45.7489, "lon": 21.2087, "radius_m": 150}}
+
+    def test_home_and_away(self):
+        self.assertTrue(is_near(self.cfg, 45.7490, 21.2088))   # ~14 m away
+        self.assertFalse(is_near(self.cfg, 45.7600, 21.2087))  # ~1.2 km away
+        self.assertFalse(is_near(self.cfg, None, None))        # no location -> away
+        self.assertTrue(is_near({}, None, None))               # no home set -> always near
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 """Session state, hosts-file blocking and app killing. Standard library only."""
 import json
+import math
 import os
 import subprocess
 import time
@@ -39,6 +40,31 @@ def load_config() -> dict:
     if p.exists():
         cfg.update(json.loads(p.read_text()))
     return cfg
+
+
+def distance_m(lat1, lon1, lat2, lon2) -> float:
+    """Great-circle distance in metres (haversine)."""
+    r = 6371000.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp, dl = p2 - p1, math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(a))
+
+
+def is_near(cfg: dict, lat, lon) -> bool:
+    """True if no home is configured, or the phone is within the home radius.
+
+    A missing/invalid phone location counts as 'away' so you are never locked out
+    elsewhere by accident.
+    """
+    home = cfg.get("home")
+    if not home:
+        return True
+    try:
+        d = distance_m(float(home["lat"]), float(home["lon"]), float(lat), float(lon))
+    except (TypeError, ValueError, KeyError):
+        return False
+    return d <= float(home.get("radius_m", 150))
 
 
 # ---------- session ----------
