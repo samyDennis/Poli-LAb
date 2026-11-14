@@ -35,7 +35,8 @@ def make_handler(cfg):
             token = parse_qs(u.query).get("token", [""])[0]
             if u.path != "/status":
                 return self._send(404, {"error": "not found"})
-            if not self._local() and (not cfg["token"] or token != cfg["token"]):
+            expected = load_config()["token"]  # fresh read so token edits apply live
+            if not self._local() and (not expected or token != expected):
                 return self._send(403, {"error": "bad token"})
             with LOCK:
                 self._send(200, Session().status())
