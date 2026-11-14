@@ -9,7 +9,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from .core import Session, apply_hosts, is_near, kill_apps, load_config
+from .core import Pass, Session, apply_hosts, is_near, kill_apps, load_config
 
 LOCK = threading.Lock()
 
@@ -34,17 +34,26 @@ def make_handler(cfg):
             u = urlparse(self.path)
             q = parse_qs(u.query)
             token = q.get("token", [""])[0]
-            if u.path != "/status":
+            if u.path not in ("/status", "/pass"):
                 return self._send(404, {"error": "not found"})
             expected = load_config()["token"]  # fresh read so token edits apply live
             if not self._local() and (not expected or token != expected):
                 return self._send(403, {"error": "bad token"})
+            conf = load_config()
+            near = is_near(conf, q.get("lat", [None])[0], q.get("lon", [None])[0])
+            now = time.time()
             with LOCK:
                 st = Session().status()
-            # Phone should lock only while a session runs AND the phone is at home.
-            near = is_near(load_config(), q.get("lat", [None])[0], q.get("lon", [None])[0])
-            st["near"] = near
-            st["lock_phone"] = st["locked"] and near
+                chat = Pass(conf)
+                if u.path == "/pass":
+                    return self._send(200, chat.request(now, st["locked"], near))
+                st["near"] = near
+                # Focus: only while a session runs AND the phone is at home.
+                st["lock_phone"] = st["locked"] and near
+                # Instagram/TikTok/YouTube: blocked at home unless a chat pass is running.
+                st["block_social"] = chat.blocks_social(now, st["locked"], near)
+                st["pass_seconds_left"] = chat.seconds_left(now) if chat.active(now) else 0
+                st["passes_left_today"] = chat.left_today(now)
             self._send(200, st)
 
         def do_POST(self):

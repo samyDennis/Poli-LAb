@@ -119,6 +119,74 @@ class Session:
                 "tasks_left": self.tasks_left(), "tasks": self.data["tasks"]}
 
 
+# ---------- chat pass ----------
+
+PASS_DEFAULTS = {"wait_s": 60, "minutes": 10, "per_day": 3}
+
+
+class Pass:
+    """Time-boxed 'chat pass' for social apps while at home.
+
+    request() is called twice by the phone: the first call starts the wait,
+    a later call after `wait_s` seconds grants the pass (counted per day).
+    """
+
+    def __init__(self, cfg: dict | None = None, path: Path | None = None):
+        self.cfg = {**PASS_DEFAULTS, **((cfg or {}).get("pass") or {})}
+        self.path = path or home_dir() / "passes.json"
+        self.d = {"requested_at": 0, "active_until": 0, "day": "", "used": 0}
+        if self.path.exists():
+            self.d.update(json.loads(self.path.read_text()))
+
+    def _save(self):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self.path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(self.d))
+        os.replace(tmp, self.path)
+
+    def _roll(self, now: float):
+        day = time.strftime("%Y-%m-%d", time.localtime(now))
+        if self.d["day"] != day:
+            self.d.update(day=day, used=0)
+
+    def active(self, now: float) -> bool:
+        return now < self.d["active_until"]
+
+    def seconds_left(self, now: float) -> int:
+        return max(0, int(self.d["active_until"] - now))
+
+    def left_today(self, now: float) -> int:
+        self._roll(now)
+        return max(0, int(self.cfg["per_day"]) - self.d["used"])
+
+    def request(self, now: float, session_locked: bool, near: bool) -> dict:
+        if not near:
+            return {"status": "free"}
+        if session_locked:
+            return {"status": "refused", "reason": "study session running"}
+        if self.active(now):
+            return {"status": "active", "seconds_left": self.seconds_left(now)}
+        self._roll(now)
+        if self.left_today(now) <= 0:
+            return {"status": "refused", "reason": "no passes left today"}
+        wait = float(self.cfg["wait_s"])
+        started = self.d["requested_at"]
+        if not started or now - started > wait + 300:  # none pending, or it went stale
+            self.d["requested_at"] = now
+            self._save()
+            return {"status": "waiting", "wait_left": int(wait)}
+        if now - started < wait:
+            return {"status": "waiting", "wait_left": int(wait - (now - started)) + 1}
+        self.d.update(requested_at=0, used=self.d["used"] + 1,
+                      active_until=now + float(self.cfg["minutes"]) * 60)
+        self._save()
+        return {"status": "active", "seconds_left": self.seconds_left(now)}
+
+    def blocks_social(self, now: float, session_locked: bool, near: bool) -> bool:
+        """At home, social apps are blocked unless a pass is running and no session is."""
+        return near and (session_locked or not self.active(now))
+
+
 # ---------- enforcement ----------
 
 def render_block(domains: list[str]) -> str:

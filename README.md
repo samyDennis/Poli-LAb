@@ -52,6 +52,14 @@ The Shortcut sends the phone's GPS as `&lat=...&lon=...`; `/status` then returns
 `lock_phone` (= session running AND phone within the radius). The Shortcut should read **lock_phone**.
 No location, or outside the radius, means "away": never locked.
 
+## Chat pass (Instagram at home, in small doses)
+At home, `/status` returns `block_social` = true unless a pass is running (or a study session is on).
+`/pass?token=..&lat=..&lon=..` starts a wait (default 60 s); calling it again after the wait grants a
+pass (default 10 min, 3 per day, refused during a study session). Away from home nothing is blocked.
+Tune in config.json: `"pass": {"wait_s": 60, "minutes": 10, "per_day": 3}`.
+Shortcuts: "Chat pass" = call `/pass`, wait 60 s, call `/pass` again. App-opened automations for
+Instagram/TikTok/YouTube read `block_social` and go to the Home Screen when it is true.
+
 ## Development
 ```bash
 STUDYLOCK_HOME=/tmp/sl STUDYLOCK_HOSTS=/tmp/hosts python3 -m studylock daemon
