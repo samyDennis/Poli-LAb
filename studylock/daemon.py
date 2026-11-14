@@ -9,7 +9,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from .core import Pass, Session, apply_hosts, is_near, kill_apps, load_config
+from .core import Pass, Session, apply_hosts, home_dir, is_near, kill_apps, load_config
 
 LOCK = threading.Lock()
 
@@ -42,6 +42,13 @@ def make_handler(cfg):
             conf = load_config()
             near = is_near(conf, q.get("lat", [None])[0], q.get("lon", [None])[0])
             now = time.time()
+            try:  # debugging aid: remember exactly what the phone last sent
+                (home_dir() / "last_request.json").write_text(json.dumps({
+                    "path": u.path, "lat": q.get("lat"), "lon": q.get("lon"),
+                    "near": near, "from": self.client_address[0],
+                    "at": time.strftime("%H:%M:%S", time.localtime(now))}))
+            except OSError:
+                pass
             with LOCK:
                 st = Session().status()
                 chat = Pass(conf)
