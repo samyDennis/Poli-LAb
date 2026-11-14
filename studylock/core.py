@@ -122,6 +122,38 @@ class Session:
                 "tasks_left": self.tasks_left(), "tasks": self.data["tasks"]}
 
 
+# ---------- stay-awake window ----------
+
+def in_window(window: dict | None, now: float | None = None) -> bool:
+    """True if local time is inside {"start": "HH:MM", "end": "HH:MM"} (may cross midnight)."""
+    if not window:
+        return False
+    t = time.localtime(now or time.time())
+    cur = t.tm_hour * 60 + t.tm_min
+
+    def mins(x):
+        h, m = x.split(":")
+        return int(h) * 60 + int(m)
+
+    a, b = mins(window["start"]), mins(window["end"])
+    return a <= cur < b if a <= b else (cur >= a or cur < b)
+
+
+_awake_state = {"on": None}
+
+
+def set_awake(on: bool):
+    """Keep the Mac awake with the lid closed (pmset disablesleep) only while `on`."""
+    if _awake_state["on"] is on:
+        return
+    try:
+        subprocess.run(["pmset", "-a", "disablesleep", "1" if on else "0"], check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _awake_state["on"] = on
+    except FileNotFoundError:
+        pass
+
+
 # ---------- chat pass ----------
 
 PASS_DEFAULTS = {"wait_s": 60, "minutes": 10, "per_day": 3}

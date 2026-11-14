@@ -2,7 +2,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from studylock.core import BEGIN, Pass, Session, apply_hosts, is_near, strip_block
+import time
+
+from studylock.core import BEGIN, Pass, Session, apply_hosts, in_window, is_near, strip_block
 
 
 class T(unittest.TestCase):
@@ -69,6 +71,22 @@ class PassTests(unittest.TestCase):
         self.assertEqual(self.p.request(t, True, True)["status"], "refused")
         self.assertEqual(self.p.request(t, False, False)["status"], "free")
         self.assertFalse(self.p.blocks_social(t, False, False))  # away: never blocked
+
+
+class Window(unittest.TestCase):
+    def at(self, hh, mm):
+        return time.mktime((2026, 11, 15, hh, mm, 0, 0, 0, -1))
+
+    def test_same_day_and_overnight(self):
+        day = {"start": "08:00", "end": "23:00"}
+        self.assertTrue(in_window(day, self.at(12, 0)))
+        self.assertFalse(in_window(day, self.at(23, 30)))
+        self.assertFalse(in_window(day, self.at(7, 59)))
+        night = {"start": "22:00", "end": "02:00"}
+        self.assertTrue(in_window(night, self.at(23, 0)))
+        self.assertTrue(in_window(night, self.at(1, 0)))
+        self.assertFalse(in_window(night, self.at(12, 0)))
+        self.assertFalse(in_window(None, self.at(12, 0)))
 
 
 if __name__ == "__main__":

@@ -9,7 +9,8 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from .core import Pass, Session, apply_hosts, home_dir, is_near, kill_apps, load_config
+from .core import (Pass, Session, apply_hosts, home_dir, in_window, is_near, kill_apps,
+                   load_config, set_awake)
 
 LOCK = threading.Lock()
 
@@ -88,6 +89,8 @@ def make_handler(cfg):
 
 
 def enforce(session: Session, cfg: dict):
+    if "awake_window" in cfg:  # optional: only stay awake with the lid closed in this window
+        set_awake(in_window(cfg["awake_window"]))
     locked = session.locked()
     apply_hosts(locked, cfg["domains"])
     if locked:
