@@ -39,6 +39,7 @@ class Near(unittest.TestCase):
     def test_home_and_away(self):
         self.assertTrue(is_near(self.cfg, 45.7490, 21.2088))   # ~14 m away
         self.assertFalse(is_near(self.cfg, 45.7600, 21.2087))  # ~1.2 km away
+        self.assertTrue(is_near(self.cfg, "45,7490", "21,2088"))  # decimal commas
         self.assertFalse(is_near(self.cfg, None, None))        # no location -> away
         self.assertTrue(is_near({}, None, None))               # no home set -> always near
 

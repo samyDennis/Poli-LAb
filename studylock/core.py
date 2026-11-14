@@ -60,8 +60,11 @@ def is_near(cfg: dict, lat, lon) -> bool:
     home = cfg.get("home")
     if not home:
         return True
+    def num(x):  # phones with a comma decimal separator send "46,74165"
+        return float(str(x).replace(",", "."))
+
     try:
-        d = distance_m(float(home["lat"]), float(home["lon"]), float(lat), float(lon))
+        d = distance_m(num(home["lat"]), num(home["lon"]), num(lat), num(lon))
     except (TypeError, ValueError, KeyError):
         return False
     return d <= float(home.get("radius_m", 150))
