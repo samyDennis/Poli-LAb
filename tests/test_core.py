@@ -88,6 +88,12 @@ class Window(unittest.TestCase):
         self.assertFalse(in_window(night, self.at(12, 0)))
         self.assertFalse(in_window(None, self.at(12, 0)))
 
+    def test_two_windows(self):
+        w = [{"start": "08:00", "end": "12:00"}, {"start": "17:00", "end": "20:00"}]
+        for hh, expect in [(7, False), (8, True), (11, True), (12, False), (14, False),
+                           (17, True), (19, True), (20, False), (23, False)]:
+            self.assertEqual(in_window(w, self.at(hh, 0)), expect, hh)
+
 
 if __name__ == "__main__":
     unittest.main()

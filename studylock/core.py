@@ -124,10 +124,15 @@ class Session:
 
 # ---------- stay-awake window ----------
 
-def in_window(window: dict | None, now: float | None = None) -> bool:
-    """True if local time is inside {"start": "HH:MM", "end": "HH:MM"} (may cross midnight)."""
+def in_window(window, now: float | None = None) -> bool:
+    """True if local time is inside a window or any of a list of windows.
+
+    A window is {"start": "HH:MM", "end": "HH:MM"} and may cross midnight.
+    """
     if not window:
         return False
+    if isinstance(window, list):
+        return any(in_window(w, now) for w in window)
     t = time.localtime(now or time.time())
     cur = t.tm_hour * 60 + t.tm_min
 

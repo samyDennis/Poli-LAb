@@ -62,7 +62,8 @@ Instagram/TikTok/YouTube read `block_social` and go to the Home Screen when it i
 
 ## Stay awake only in a time window (lid closed)
 So your phone check keeps working with the lid shut, but the Mac sleeps normally otherwise, add to
-config.json: `"awake_window": {"start": "08:00", "end": "23:00"}` (may cross midnight, local time).
+config.json: `"awake_window": [{"start": "08:00", "end": "12:00"}, {"start": "17:00", "end": "20:00"}]`
+(a single `{...}` also works; windows may cross midnight; local time).
 Inside the window the daemon runs `pmset -a disablesleep 1`; outside it, `0`. Keep the Mac plugged in
 and ventilated. Remove the key to leave the setting alone.
 
