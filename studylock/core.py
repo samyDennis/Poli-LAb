@@ -127,9 +127,11 @@ def apply_hosts(locked: bool, domains: list[str], path: Path | None = None) -> b
     if desired == current:
         return False
     path.write_text(desired)
-    if os.environ.get("STUDYLOCK_HOSTS") is None:  # real system: flush DNS caches
-        subprocess.run(["dscacheutil", "-flushcache"], check=False)
-        subprocess.run(["killall", "-HUP", "mDNSResponder"], check=False)
+    for cmd in (["dscacheutil", "-flushcache"], ["killall", "-HUP", "mDNSResponder"]):
+        try:  # flush DNS caches so the change takes effect immediately (macOS)
+            subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except FileNotFoundError:
+            pass
     return True
 
 
