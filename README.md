@@ -71,7 +71,8 @@ and ventilated. Remove the key to leave the setting alone.
 `"block_windows": [{"start": "06:00", "end": "12:00"}, {"start": "16:00", "end": "19:00"},
 {"start": "22:00", "end": "00:00"}]` - at home, social apps are blocked only inside these windows
 (chat passes still work there); outside them they're free. Study sessions block regardless.
-If `awake_window` is not set, the Mac stays awake (lid closed) during the block windows.
+If `awake_window` is not set, the Mac stays awake (lid closed) during the block windows,
+but only while plugged in; on battery it sleeps normally (so it never runs hot in a bag).
 Without `block_windows`, social apps are blocked at home all day.
 
 ## Development

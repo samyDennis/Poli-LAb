@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from .core import (Pass, Session, apply_hosts, home_dir, in_window, is_near, kill_apps,
-                   load_config, set_awake)
+                   load_config, on_ac_power, set_awake)
 
 LOCK = threading.Lock()
 
@@ -97,7 +97,8 @@ def enforce(session: Session, cfg: dict):
     # (defaults to the block windows, so the phone check works exactly when it matters).
     windows = cfg.get("awake_window", cfg.get("block_windows"))
     if windows is not None:
-        set_awake(in_window(windows))
+        # Only while plugged in: on battery (e.g. in a bag) the Mac sleeps normally.
+        set_awake(in_window(windows) and on_ac_power())
     locked = session.locked()
     apply_hosts(locked, cfg["domains"])
     if locked:

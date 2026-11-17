@@ -144,6 +144,16 @@ def in_window(window, now: float | None = None) -> bool:
     return a <= cur < b if a <= b else (cur >= a or cur < b)
 
 
+def on_ac_power() -> bool:
+    """True if the Mac is plugged in. Unknown/unavailable -> False (safe: let it sleep)."""
+    try:
+        out = subprocess.run(["pmset", "-g", "batt"], capture_output=True, text=True,
+                             check=False).stdout
+    except FileNotFoundError:
+        return False
+    return "AC Power" in out
+
+
 _awake_state = {"on": None}
 
 
