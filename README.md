@@ -67,6 +67,13 @@ config.json: `"awake_window": [{"start": "08:00", "end": "12:00"}, {"start": "17
 Inside the window the daemon runs `pmset -a disablesleep 1`; outside it, `0`. Keep the Mac plugged in
 and ventilated. Remove the key to leave the setting alone.
 
+## Block windows (when Instagram is blocked at home)
+`"block_windows": [{"start": "06:00", "end": "12:00"}, {"start": "16:00", "end": "19:00"},
+{"start": "22:00", "end": "00:00"}]` - at home, social apps are blocked only inside these windows
+(chat passes still work there); outside them they're free. Study sessions block regardless.
+If `awake_window` is not set, the Mac stays awake (lid closed) during the block windows.
+Without `block_windows`, social apps are blocked at home all day.
+
 ## Development
 ```bash
 STUDYLOCK_HOME=/tmp/sl STUDYLOCK_HOSTS=/tmp/hosts python3 -m studylock daemon

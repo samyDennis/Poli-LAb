@@ -53,13 +53,17 @@ def make_handler(cfg):
             with LOCK:
                 st = Session().status()
                 chat = Pass(conf)
+                # No block_windows configured = blocked at home all day (old behaviour).
+                bw = conf.get("block_windows")
+                in_bw = in_window(bw, now) if bw is not None else True
                 if u.path == "/pass":
-                    return self._send(200, chat.request(now, st["locked"], near))
+                    return self._send(200, chat.request(now, st["locked"], near, in_bw))
                 st["near"] = near
                 # Focus: only while a session runs AND the phone is at home.
                 st["lock_phone"] = st["locked"] and near
                 # Instagram/TikTok/YouTube: blocked at home unless a chat pass is running.
-                st["block_social"] = chat.blocks_social(now, st["locked"], near)
+                st["block_social"] = chat.blocks_social(now, st["locked"], near, in_bw)
+                st["in_block_window"] = in_bw
                 st["pass_seconds_left"] = chat.seconds_left(now) if chat.active(now) else 0
                 st["passes_left_today"] = chat.left_today(now)
             self._send(200, st)
@@ -89,8 +93,11 @@ def make_handler(cfg):
 
 
 def enforce(session: Session, cfg: dict):
-    if "awake_window" in cfg:  # optional: only stay awake with the lid closed in this window
-        set_awake(in_window(cfg["awake_window"]))
+    # Optional: stay awake with the lid closed only during these windows
+    # (defaults to the block windows, so the phone check works exactly when it matters).
+    windows = cfg.get("awake_window", cfg.get("block_windows"))
+    if windows is not None:
+        set_awake(in_window(windows))
     locked = session.locked()
     apply_hosts(locked, cfg["domains"])
     if locked:

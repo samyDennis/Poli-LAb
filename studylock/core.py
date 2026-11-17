@@ -199,11 +199,14 @@ class Pass:
         self._roll(now)
         return max(0, int(self.cfg["per_day"]) - self.d["used"])
 
-    def request(self, now: float, session_locked: bool, near: bool) -> dict:
+    def request(self, now: float, session_locked: bool, near: bool,
+                in_block_window: bool = True) -> dict:
         if not near:
             return {"status": "free"}
         if session_locked:
             return {"status": "refused", "reason": "study session running"}
+        if not in_block_window:
+            return {"status": "free"}
         if self.active(now):
             return {"status": "active", "seconds_left": self.seconds_left(now)}
         self._roll(now)
@@ -222,9 +225,11 @@ class Pass:
         self._save()
         return {"status": "active", "seconds_left": self.seconds_left(now)}
 
-    def blocks_social(self, now: float, session_locked: bool, near: bool) -> bool:
-        """At home, social apps are blocked unless a pass is running and no session is."""
-        return near and (session_locked or not self.active(now))
+    def blocks_social(self, now: float, session_locked: bool, near: bool,
+                      in_block_window: bool = True) -> bool:
+        """At home: always blocked during a study session; inside a block window,
+        blocked unless a chat pass is running. Away from home: never blocked."""
+        return near and (session_locked or (in_block_window and not self.active(now)))
 
 
 # ---------- enforcement ----------

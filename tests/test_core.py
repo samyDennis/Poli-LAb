@@ -73,6 +73,16 @@ class PassTests(unittest.TestCase):
         self.assertFalse(self.p.blocks_social(t, False, False))  # away: never blocked
 
 
+class BlockWindowTests(unittest.TestCase):
+    def test_outside_window_free_unless_session(self):
+        p = Pass({}, Path(tempfile.mkdtemp()) / "p.json")
+        t = 3_000_000
+        self.assertFalse(p.blocks_social(t, False, True, False))  # home, outside window
+        self.assertTrue(p.blocks_social(t, True, True, False))    # study session still blocks
+        self.assertTrue(p.blocks_social(t, False, True, True))    # inside window
+        self.assertEqual(p.request(t, False, True, False)["status"], "free")
+
+
 class Window(unittest.TestCase):
     def at(self, hh, mm):
         return time.mktime((2026, 11, 15, hh, mm, 0, 0, 0, -1))
@@ -87,6 +97,14 @@ class Window(unittest.TestCase):
         self.assertTrue(in_window(night, self.at(1, 0)))
         self.assertFalse(in_window(night, self.at(12, 0)))
         self.assertFalse(in_window(None, self.at(12, 0)))
+
+    def test_user_windows(self):
+        w = [{"start": "06:00", "end": "12:00"}, {"start": "16:00", "end": "19:00"},
+             {"start": "22:00", "end": "00:00"}]
+        for hh, mm, expect in [(5, 59, False), (6, 0, True), (11, 59, True), (12, 0, False),
+                               (15, 59, False), (16, 0, True), (18, 59, True), (19, 0, False),
+                               (21, 59, False), (22, 0, True), (23, 59, True), (0, 0, False)]:
+            self.assertEqual(in_window(w, self.at(hh, mm)), expect, (hh, mm))
 
     def test_two_windows(self):
         w = [{"start": "08:00", "end": "12:00"}, {"start": "17:00", "end": "20:00"}]
