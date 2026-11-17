@@ -154,6 +154,45 @@ def on_ac_power() -> bool:
     return "AC Power" in out
 
 
+def upcoming_starts(windows, now: float, horizon_s: float = 26 * 3600) -> list[float]:
+    """Epoch times of window starts in (now, now + horizon]."""
+    if not windows:
+        return []
+    if isinstance(windows, dict):
+        windows = [windows]
+    out = []
+    base = time.localtime(now)
+    for day in range(3):  # today, tomorrow, the day after
+        for w in windows:
+            h, m = (int(x) for x in w["start"].split(":"))
+            t = time.mktime((base.tm_year, base.tm_mon, base.tm_mday + day, h, m, 0, 0, 0, -1))
+            if now < t <= now + horizon_s:
+                out.append(t)
+    return sorted(out)
+
+
+_scheduled_wakes: set[str] = set()
+
+
+def schedule_wakes(windows, now: float | None = None, lead_s: int = 120):
+    """Ask macOS to wake the Mac shortly before each upcoming window starts.
+
+    A sleeping Mac runs no code, so without this a window that starts while the Mac
+    sleeps (e.g. 06:00 after sleeping at midnight) would never take effect.
+    """
+    now = now or time.time()
+    for t in upcoming_starts(windows, now):
+        stamp = time.strftime("%m/%d/%y %H:%M:%S", time.localtime(t - lead_s))
+        if stamp in _scheduled_wakes:
+            continue
+        try:
+            subprocess.run(["pmset", "schedule", "wake", stamp], check=False,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            _scheduled_wakes.add(stamp)
+        except FileNotFoundError:
+            return
+
+
 _awake_state = {"on": None}
 
 

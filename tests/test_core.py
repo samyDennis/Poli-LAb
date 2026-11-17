@@ -4,7 +4,8 @@ from pathlib import Path
 
 import time
 
-from studylock.core import BEGIN, Pass, Session, apply_hosts, in_window, is_near, strip_block
+from studylock.core import (BEGIN, Pass, Session, apply_hosts, in_window, is_near, strip_block,
+                            upcoming_starts)
 
 
 class T(unittest.TestCase):
@@ -105,6 +106,13 @@ class Window(unittest.TestCase):
                                (15, 59, False), (16, 0, True), (18, 59, True), (19, 0, False),
                                (21, 59, False), (22, 0, True), (23, 59, True), (0, 0, False)]:
             self.assertEqual(in_window(w, self.at(hh, mm)), expect, (hh, mm))
+
+    def test_upcoming_starts_after_midnight(self):
+        w = [{"start": "06:00", "end": "12:00"}, {"start": "16:00", "end": "19:00"},
+             {"start": "22:00", "end": "00:00"}]
+        now = self.at(0, 1)  # just after the night window ended
+        hours = [time.localtime(t).tm_hour for t in upcoming_starts(w, now, 24 * 3600)]
+        self.assertEqual(hours, [6, 16, 22])
 
     def test_two_windows(self):
         w = [{"start": "08:00", "end": "12:00"}, {"start": "17:00", "end": "20:00"}]

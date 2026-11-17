@@ -73,6 +73,8 @@ and ventilated. Remove the key to leave the setting alone.
 (chat passes still work there); outside them they're free. Study sessions block regardless.
 If `awake_window` is not set, the Mac stays awake (lid closed) during the block windows,
 but only while plugged in; on battery it sleeps normally (so it never runs hot in a bag).
+The daemon also books `pmset schedule wake` events 2 minutes before each window starts, so a
+sleeping Mac wakes up in time (check with `pmset -g sched`).
 Without `block_windows`, social apps are blocked at home all day.
 
 ## Development
