@@ -145,13 +145,21 @@ def in_window(window, now: float | None = None) -> bool:
 
 
 def on_ac_power() -> bool:
-    """True if the Mac is plugged in. Unknown/unavailable -> False (safe: let it sleep)."""
+    """True if a charger is connected. Unknown/unavailable -> False (safe: let it sleep).
+
+    Checks the charger itself (ExternalConnected), not just the power source: with a
+    charge limit (e.g. 90%) macOS may run from the battery while still plugged in.
+    """
     try:
         out = subprocess.run(["pmset", "-g", "batt"], capture_output=True, text=True,
                              check=False).stdout
+        if "AC Power" in out:
+            return True
+        io = subprocess.run(["ioreg", "-rn", "AppleSmartBattery"], capture_output=True,
+                            text=True, check=False).stdout
+        return '"ExternalConnected" = Yes' in io
     except FileNotFoundError:
         return False
-    return "AC Power" in out
 
 
 def upcoming_starts(windows, now: float, horizon_s: float = 26 * 3600) -> list[float]:
